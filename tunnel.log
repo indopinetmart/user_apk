@@ -19,3 +19,4 @@
 2025-09-28T02:31:54Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.67
 2025-09-28T02:31:54Z INF ICMP proxy will use fe80::5d63:2090:c44d:e8f in zone Ethernet as source for IPv6
 2025-09-28T02:31:54Z INF Starting metrics server on 127.0.0.1:20242/metrics
+2025-09-28T02:31:54Z INF Registered tunnel connection connIndex=0 connection=d3e384ee-2857-4845-8a1e-80edffaa2d61 event=0 ip=198.41.192.67 location=cgk05 protocol=quic

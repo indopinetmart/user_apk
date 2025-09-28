@@ -41,8 +41,13 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
-      - name: Copy CI Environment
-        run: cp .env.ci .env || echo "⚠️ CI env file tidak ada, dilewati"
+      - name: Setup CI Environment
+        run: |
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            echo "⚠️ .env.example tidak ditemukan, CI mungkin gagal"
+          fi
 
       - name: Generate App Key
         run: php artisan key:generate --ansi

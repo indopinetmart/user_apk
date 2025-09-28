@@ -21,7 +21,7 @@
 
 - Autentikasi multi-level user (9 level role).  
 - Manajemen profil & file upload (`profile`, `selfie`, `verifikasi`).  
-- Manajemen produk & transaksi.  
+- Manajemen produk & transaksi.  z`
 - Integrasi **Pi Network SDK** dan KYC verification.  
 - Sistem laporan transaksi.  
 - Deployment otomatis dengan **zero downtime** ke Hostinger.
