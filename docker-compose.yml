@@ -1,0 +1,107 @@
+# Docker Compose file untuk user-services
+# Versi Compose (3.9) sudah cukup untuk Docker Desktop terbaru
+#version: "3.9"
+
+services:
+  # ============================
+  # Aplikasi utama (Laravel / PHP)
+  # ============================
+  user-app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile   # Lokasi Dockerfile PHP
+    container_name: user-app              # Nama container unik
+    volumes:
+      - ./:/var/www/html                  # Mount seluruh project ke dalam container
+      - /var/www/html/vendor              # Vendor tetap dikelola di dalam container
+    depends_on:
+      - user-db                           # Tunggu DB siap dulu sebelum jalan
+    networks:
+      - user_net
+    restart: unless-stopped               # Auto restart jika error/host restart
+
+  # ============================
+  # Worker untuk job queue
+  # ============================
+  user-worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: user-worker
+    command: supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+    depends_on:
+      - user-app
+    networks:
+      - user_net
+    restart: unless-stopped
+
+  # ============================
+  # Web server Nginx
+  # ============================
+  user-nginx:
+    image: nginx:1.25-alpine
+    container_name: user-nginx
+    ports:
+      - "8082:80"                         # User-service akan jalan di http://localhost:8082
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - user-app
+    networks:
+      - user_net
+    restart: unless-stopped
+
+  # ============================
+  # Database MariaDB
+  # ============================
+  user-db:
+    image: mariadb:11.2
+    container_name: user-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}     # password root DB
+      MYSQL_DATABASE: ${DB_DATABASE:-user_services}          # nama database default
+      MYSQL_USER: ${DB_USERNAME:-user}                       # user db
+      MYSQL_PASSWORD: ${DB_PASSWORD:-userpass}               # password user db
+    ports:
+      - "3310:3306"                     # expose DB di host port 3310 (tidak bentrok dengan management 3308/3309)
+    volumes:
+      - user_db_data:/var/lib/mysql      # data DB disimpan di volume khusus
+    networks:
+      - user_net
+    restart: unless-stopped
+
+  # ============================
+  # phpMyAdmin untuk user-db
+  # ============================
+  user-phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: user-phpmyadmin
+    environment:
+      PMA_HOST: user-db
+      PMA_USER: ${DB_USERNAME:-user}
+      PMA_PASSWORD: ${DB_PASSWORD:-userpass}
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8083:80"                       # phpMyAdmin untuk user-services di http://localhost:8083
+    depends_on:
+      - user-db
+    networks:
+      - user_net
+    restart: unless-stopped
+
+# ============================
+# Volume untuk database
+# ============================
+volumes:
+  user_db_data:
+
+# ============================
+# Network khusus untuk user-services
+# ============================
+networks:
+  user_net:
+    driver: bridge
